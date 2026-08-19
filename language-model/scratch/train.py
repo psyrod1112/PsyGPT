@@ -23,8 +23,8 @@ def get_batch(split):
         x_list = [] 
         y_list = []
         for start in start_ids:
-            x_list.append(data[start:start+seq_len])
-            y_list.append(data[start+1:start+seq_len+1])
+            x_list.append(train_data[start:start+seq_len])
+            y_list.append(train_data[start+1:start+seq_len+1])
         
         x = torch.stack(x_list)
         y = torch.stack(y_list)
@@ -35,8 +35,8 @@ def get_batch(split):
         x_list = [] 
         y_list = []
         for start in start_ids:
-            x_list.append(data[start:start+seq_len])
-            y_list.append(data[start+1:start+seq_len+1])
+            x_list.append(val_data[start:start+seq_len])
+            y_list.append(val_data[start+1:start+seq_len+1])
         
         x = torch.stack(x_list)
         y = torch.stack(y_list)
