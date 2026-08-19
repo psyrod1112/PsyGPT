@@ -17,6 +17,7 @@ class TransformerBlock(nn.Module):
         x = x + self.ffn(self.ln2(x))
         return x
 
-tb = TransformerBlock(16, 4)
-res = tb(torch.randn(2, 5, 16))
-print(res.shape)
+if __name__ == "__main__":
+    tb = TransformerBlock(16, 4)
+    res = tb(torch.randn(2, 5, 16))
+    print(res.shape)

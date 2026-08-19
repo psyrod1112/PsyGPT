@@ -20,8 +20,9 @@ class CharTokenizer:
     def vocab_size(self) -> int:
         return len(self.token_list)
 
-tok = CharTokenizer("hello world")
-ids = tok.encode("hello")
-print(ids)
-print(tok.decode(ids))  # "hello"가 나와야 함
-assert tok.decode(tok.encode("hello world")) == "hello world"
+if __name__ == "__main__":
+    tok = CharTokenizer("hello world")
+    ids = tok.encode("hello")
+    print(ids)
+    print(tok.decode(ids))  # "hello"가 나와야 함
+    assert tok.decode(tok.encode("hello world")) == "hello world"

@@ -27,6 +27,8 @@ class GPTModel(nn.Module):
         
         return logits  # [batch, seq_len, vocab_size]
     
-gptModel = GPTModel(vocab_size=8, embed_dim=16, num_heads=4, num_layers=2, max_seq_len=10)
-logits = gptModel(torch.randint(0, 8, (2, 5)))
-print(logits)
+    
+if __name__ == "__main__":
+    gptModel = GPTModel(vocab_size=8, embed_dim=16, num_heads=4, num_layers=2, max_seq_len=10)
+    logits = gptModel(torch.randint(0, 8, (2, 5)))
+    print(logits)
