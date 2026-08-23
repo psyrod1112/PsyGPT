@@ -81,7 +81,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     if os.path.exists("checkpoint.pt"):
-        checkpoint = torch.load("checkpoint.pt")
+        checkpoint = torch.load("checkpoint.pt", map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         print("체크포인트에서 이어서 학습합니다")

@@ -3,7 +3,8 @@ from model import GPTModel
 from BPE import BPETokenizer
 from train import generate
 
-checkpoint = torch.load("checkpoint.pt")
+device = "cuda" if torch.cuda.is_available() else "cpu"
+checkpoint = torch.load("checkpoint.pt", map_location=device)
 
 # 1. vocab 매핑으로 토크나이저를 다시 만들어야 하는데,
 #    CharTokenizer는 지금 "텍스트를 받아서" vocab을 만들도록 짜여있죠?

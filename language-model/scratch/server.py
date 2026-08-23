@@ -8,9 +8,11 @@ from model import GPTModel
 from BPE import BPETokenizer
 from train import generate
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+checkpoint = torch.load("checkpoint.pt", weights_only=False, map_location=device)
+
 app = FastAPI()
 
-checkpoint = torch.load("checkpoint.pt", weights_only=False)
 tok = BPETokenizer(vocab=checkpoint["vocab"], merges=checkpoint["merges"])
 model = GPTModel(**checkpoint["config"])
 model.load_state_dict(checkpoint["model_state_dict"])
