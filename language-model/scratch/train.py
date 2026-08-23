@@ -1,11 +1,12 @@
+import os
 import torch
 import torch.nn.functional as F
-from tokenizer import CharTokenizer
+from BPE import BPETokenizer
 from model import GPTModel
 
 # 1. 데이터 준비
 text = open("shakespeare.txt").read()
-tok = CharTokenizer(text)
+tok = BPETokenizer(text, num_merges=300)
 data = torch.tensor(tok.encode(text), dtype=torch.long)
 n = len(data)
 train_data = data[:int(n*0.9)]
@@ -72,24 +73,47 @@ def estimate_loss(num_batches=20):
 
 # 2. 모델 + 옵티마이저
 
-model = GPTModel(vocab_size=tok.vocab_size, embed_dim=32, num_heads=4, num_layers=2, max_seq_len=seq_len)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+if __name__ == "__main__":
+    model = GPTModel(vocab_size=tok.vocab_size, embed_dim=32, num_heads=4, num_layers=2, max_seq_len=seq_len)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-# 3. 학습 루프
-for step in range(5000):
-    x, y = get_batch("train")
-    logits = model(x)
-    loss = F.cross_entropy(logits.view(-1, tok.vocab_size), y.view(-1))
+    if os.path.exists("checkpoint.pt"):
+        checkpoint = torch.load("checkpoint.pt")
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        print("체크포인트에서 이어서 학습합니다")
+    else:
+        print("체크포인트 없음 — 처음부터 학습합니다")
 
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+    # 3. 학습 루프
+    for step in range(5000):
+        x, y = get_batch("train")
+        logits = model(x)
+        loss = F.cross_entropy(logits.view(-1, tok.vocab_size), y.view(-1))
 
-    if step % 50 == 0:
-        losses = estimate_loss()
-        print(f"step {step}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if step % 50 == 0:
+            losses = estimate_loss()
+            print(f"step {step}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
 
-print(generate(model, tok, prompt="ROMEO:", max_new_tokens=500, seq_len=seq_len))
+    print(generate(model, tok, prompt="ROMEO:", max_new_tokens=500, seq_len=seq_len))
+    checkpoint = {
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),# model.state_dict()
+        "config": {
+            "vocab_size": tok.vocab_size,
+            "embed_dim": 32,
+            "num_heads": 4,
+            "num_layers": 2,
+            "max_seq_len": seq_len,
+        },
+        "vocab": tok.vocab,        # 문자 -> 인덱스 매핑 (CharTokenizer가 갖고 있는 그 딕셔너리)
+        "merges": tok.merges,    
+    }
+    torch.save(checkpoint, "checkpoint.pt")
 
 
