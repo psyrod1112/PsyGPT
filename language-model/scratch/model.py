@@ -16,7 +16,7 @@ class GPTModel(nn.Module):
         
     def forward(self, idx):
         seq_len = idx.shape[1]
-        pos_idx = torch.arange(seq_len)
+        pos_idx = torch.arange(seq_len, device=idx.device)
         token_emb = self.token_embed(idx)
         pos_emb = self.pos_embed(pos_idx)
         embed = token_emb + pos_emb

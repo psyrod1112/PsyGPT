@@ -18,7 +18,7 @@ class SelfAttentionHead(nn.Module):
         k = self.K(x)
         v = self.V(x)
         scores = (q @ k.transpose(-2, -1)) / self.head_dim**0.5
-        mask = torch.tril(torch.ones(seq_len, seq_len))
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device))
         scores = scores.masked_fill(mask == 0, float('-inf'))
         
         attention_weights = torch.softmax(scores, dim=-1)
