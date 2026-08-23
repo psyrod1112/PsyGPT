@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 학습 산출물 (체크포인트는 Colab에서 만들고 다운로드로 가져오는 것이지, git으로 옮기는 게 아님)
+*.pt
+
+# 학습 데이터 (Colab 노트북에서 매번 다시 다운로드)
+language-model/scratch/shakespeare.txt
+
+# Jupyter/Colab
+.ipynb_checkpoints/
