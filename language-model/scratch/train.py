@@ -6,14 +6,14 @@ from model import GPTModel
 
 # 1. 데이터 준비
 text = open("shakespeare.txt").read()
-tok = BPETokenizer(text, num_merges=300)
+tok = BPETokenizer(text, num_merges=1000)
 data = torch.tensor(tok.encode(text), dtype=torch.long)
 n = len(data)
 train_data = data[:int(n*0.9)]
 val_data = data[int(n*0.9):]
 
-seq_len = 16
-batch_size = 8
+seq_len = 128
+batch_size = 64
 
 def get_batch(split):
     # data에서 랜덤한 시작 위치를 batch_size개 뽑아서
@@ -27,8 +27,8 @@ def get_batch(split):
             x_list.append(train_data[start:start+seq_len])
             y_list.append(train_data[start+1:start+seq_len+1])
         
-        x = torch.stack(x_list)
-        y = torch.stack(y_list)
+        x = torch.stack(x_list).to(device)
+        y = torch.stack(y_list).to(device)
         return x, y  # 각각 [batch_size, seq_len]
     
     elif split == "val":
@@ -39,12 +39,12 @@ def get_batch(split):
             x_list.append(val_data[start:start+seq_len])
             y_list.append(val_data[start+1:start+seq_len+1])
         
-        x = torch.stack(x_list)
-        y = torch.stack(y_list)
+        x = torch.stack(x_list).to(device)
+        y = torch.stack(y_list).to(device)
         return x, y  # 각각 [batch_size, seq_len]
 
 def generate(model, tokenizer, prompt: str, max_new_tokens: int, seq_len: int):
-    idx = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long)  # [1, prompt_len]
+    idx = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long).to(device)  # [1, prompt_len]
     with torch.no_grad():
         for _ in range(max_new_tokens):
             idx_cond = idx[:,-seq_len:]  # 최근 seq_len개만 자르기
@@ -72,9 +72,12 @@ def estimate_loss(num_batches=20):
             
 
 # 2. 모델 + 옵티마이저
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"사용 device: {device}")
 
 if __name__ == "__main__":
-    model = GPTModel(vocab_size=tok.vocab_size, embed_dim=32, num_heads=4, num_layers=2, max_seq_len=seq_len)
+    
+    model = GPTModel(vocab_size=tok.vocab_size, embed_dim=32, num_heads=4, num_layers=2, max_seq_len=seq_len).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     if os.path.exists("checkpoint.pt"):
@@ -86,7 +89,7 @@ if __name__ == "__main__":
         print("체크포인트 없음 — 처음부터 학습합니다")
 
     # 3. 학습 루프
-    for step in range(5000):
+    for step in range(20000):
         x, y = get_batch("train")
         logits = model(x)
         loss = F.cross_entropy(logits.view(-1, tok.vocab_size), y.view(-1))
@@ -106,9 +109,9 @@ if __name__ == "__main__":
         "optimizer_state_dict": optimizer.state_dict(),# model.state_dict()
         "config": {
             "vocab_size": tok.vocab_size,
-            "embed_dim": 32,
-            "num_heads": 4,
-            "num_layers": 2,
+            "embed_dim": 256,
+            "num_heads": 8,
+            "num_layers": 6,
             "max_seq_len": seq_len,
         },
         "vocab": tok.vocab,        # 문자 -> 인덱스 매핑 (CharTokenizer가 갖고 있는 그 딕셔너리)
