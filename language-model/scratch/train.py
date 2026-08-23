@@ -77,7 +77,7 @@ print(f"사용 device: {device}")
 
 if __name__ == "__main__":
     
-    model = GPTModel(vocab_size=tok.vocab_size, embed_dim=32, num_heads=4, num_layers=2, max_seq_len=seq_len).to(device)
+    model = GPTModel(vocab_size=tok.vocab_size, embed_dim=256, num_heads=8, num_layers=6, max_seq_len=seq_len).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     if os.path.exists("checkpoint.pt"):
@@ -88,6 +88,8 @@ if __name__ == "__main__":
     else:
         print("체크포인트 없음 — 처음부터 학습합니다")
 
+    best_val_loss = float('inf')
+    
     # 3. 학습 루프
     for step in range(20000):
         x, y = get_batch("train")
@@ -101,22 +103,26 @@ if __name__ == "__main__":
         if step % 50 == 0:
             losses = estimate_loss()
             print(f"step {step}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+            if losses['val'] < best_val_loss:
+                checkpoint = {
+                        "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": optimizer.state_dict(),# model.state_dict()
+                        "config": {
+                            "vocab_size": tok.vocab_size,
+                            "embed_dim": 256,
+                            "num_heads": 8,
+                            "num_layers": 6,
+                            "max_seq_len": seq_len,
+                        },
+                        "vocab": tok.vocab,        # 문자 -> 인덱스 매핑 (CharTokenizer가 갖고 있는 그 딕셔너리)
+                        "merges": tok.merges,    
+                    }
+                torch.save(checkpoint, "checkpoint.pt")
+                best_val_loss = losses['val']
+                print(f"  -> 새 최고기록 (val_loss={losses['val']:.4f}), 저장함")
 
 
     print(generate(model, tok, prompt="ROMEO:", max_new_tokens=500, seq_len=seq_len))
-    checkpoint = {
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),# model.state_dict()
-        "config": {
-            "vocab_size": tok.vocab_size,
-            "embed_dim": 256,
-            "num_heads": 8,
-            "num_layers": 6,
-            "max_seq_len": seq_len,
-        },
-        "vocab": tok.vocab,        # 문자 -> 인덱스 매핑 (CharTokenizer가 갖고 있는 그 딕셔너리)
-        "merges": tok.merges,    
-    }
-    torch.save(checkpoint, "checkpoint.pt")
+    
 
 
